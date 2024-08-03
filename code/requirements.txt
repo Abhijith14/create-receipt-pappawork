@@ -1,4 +1,5 @@
 pandas
+xlrd
 Pillow
 reportlab
 pywin32
