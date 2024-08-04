@@ -11,7 +11,7 @@ def read_data(excel_file_path, sheet_name_data, sheet_name_student_profile):
     df_sheet1 = pd.read_excel(excel_file_path, sheet_name=sheet_name_student_profile)
 
     # Get the enrollment number from the "data" sheet
-    enrollment_no = df_data['Enrollment No.'].iloc[-1]
+    enrollment_no = str(df_data['Enrollment No.'].iloc[-1])
 
     print('Enrollment number:', enrollment_no)
 
@@ -21,10 +21,10 @@ def read_data(excel_file_path, sheet_name_data, sheet_name_student_profile):
     # Print the corresponding row values
     print(corresponding_row)
 
-    return corresponding_row, enrollment_no
+    return corresponding_row, df_data
 
 
-def create_receipt(source_image, destination_image, corresponding_row):
+def create_receipt(source_image, destination_image, corresponding_row, enrollment_data):
     # Open the image
     image = Image.open(source_image)
 
@@ -41,18 +41,31 @@ def create_receipt(source_image, destination_image, corresponding_row):
     # Get the current date
     date = datetime.date.today().strftime('%d/%m/%Y')
 
-    # Define the positions to add the text
-    enrollment_position = (50, 50)
+    amount = enrollment_data['Amount'].iloc[-1]
+    receipt_no = enrollment_data['Sl.No'].iloc[-1]
+
+
+
+    # Define the positions to add the text    
     name_position = (340, 162)
     class_position = (700, 162)
-    section_position = (720, 162)
+
+    if len(class_text) > 2:
+        section_position = (750, 162)
+    else:
+        section_position = (720, 162)
+
     date_position = (910, 160)
+    amount_position = (460, 195)
+    receipt_no_position = (960, 182)
 
     # Add the text to the image
     draw.text(name_position, name_text, fill='white', font=font)
     draw.text(class_position, class_text, fill='white', font=font)
     draw.text(section_position, section_text, fill='white', font=font)
     draw.text(date_position, str(date), fill='white', font=font)
+    draw.text(amount_position, "₹ " + str(amount), fill='white', font=font)
+    draw.text(receipt_no_position, str(receipt_no), fill='white', font=font)
 
     # Save the modified image
     image.save(destination_image)
@@ -128,8 +141,8 @@ def main(pdf_file):
 
 
 if __name__ == '__main__':
-    corresponding_row, enrollment_no = read_data('Student Data.xls', 'data', 'Student Profile Detail Report')
-    image = create_receipt('code/Coupon GCS.png', 'code/bin/Modified_Coupon.png', corresponding_row)
+    corresponding_row, enrollment_data = read_data('Student Data.xls', 'data', 'Student Profile Detail Report')
+    image = create_receipt('code/Coupon GCS.png', 'code/bin/Modified_Coupon.png', corresponding_row, enrollment_data)
     convert_to_pdf('code/bin/Modified_Coupon.png', 'code/bin/Modified_Coupon.pdf', image)
     main('code/bin\Modified_Coupon.pdf')
     cleanup_files('code/bin/Modified_Coupon.png', 'code/bin/Modified_Coupon.pdf')
